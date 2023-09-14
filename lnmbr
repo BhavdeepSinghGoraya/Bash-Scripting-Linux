@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Function to handle error 
+err() {
+	echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $*" >&2
+	exit 1
+}  
+
+# Funtion that hepls the user
+function display_help {
+printf "NAME\n"
+printf "\t$(basename $0) - used to print content in the files line by line\n"
+printf "SYNOPSIS\n"
+printf "\t$(basename $0) [ option ] file...\n"
+printf "OPTIONS\n"
+printf "\t-h, --help\n"
+printf "\t\tThis option is used to provide the user help for using the command\n"
+printf "USEAGE\n"
+printf "\t\t $(basename $0) -h\n"
+printf "\t\t $(basename $0) file1 file2 file3\n"
+}
+
+# Parse command line arguments using getopts
+while getopts ":h" opt; do 
+	case ${opt} in 
+	h )
+	display_help
+	exit 0
+	;;
+	? )
+	err "Invalid option: -$OPTARG" 1>&2
+	exit 1
+	;;
+    	esac
+done
+# Function to print each line in a file 
+function print_file {
+#  Looping through all the arguments
+for arg in "$@"; do 
+	# Checking if the argument is a file
+	if [[ -f "$arg" ]]; then 
+	# Initializing an index number
+	INDEX=1
+	echo "$arg"
+        OWNER=$(stat -c "%U" $arg)
+	echo "file owner is: $OWNER"
+	echo "------------"
+	# Looping through all the lines in a file
+	while read line; do 
+		echo "$INDEX: $line"
+		#Incrementing the index for every iteration 
+		(( INDEX++ ))
+		done < "$arg"
+	echo "------------"
+	else
+		err "ERROR: $arg is not a file"
+	fi
+
+done
+}
+print_file "$@"

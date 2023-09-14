@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# Importing the format date file 
+source formatdate
+
+# Function to handle error
+err() {
+         echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $*" >&2
+         exit 1
+ }
+# Funtion that hepls the user
+function display_help {
+ printf "NAME\n"
+ printf "\t$(basename $0) - used to find tasks with optional due date and tag\n"
+ printf "SYNOPSIS\n"
+ printf "\t$(basename $0) [ options ] task...\n"
+ printf "OPTIONS\n"
+ printf "\t-d, --due_date\n"
+ printf "\t\tThis option finds tasks using a due date\n"
+ printf "\t-t, --tags\n"
+ printf "\t\tThis option finds tasks using tags\n"
+ printf "USAGE\n"
+ printf "\t\t$(basename $0) -d '10 March' \n"
+ printf "\t\t$(basename $0) -t Shopping\n"
+ printf "\t\t$(basename $0)\n"
+  }
+
+# Parsing over the command line using getopts
+while getopts ":hd:t:" opt; do 
+	case "${opt}" in
+	 h )
+	 display_help 
+	 exit 1
+	;;
+	 d ) 
+        DUE_DATE=$(format_date "$OPTARG" 2>/dev/null)
+           if [[ -z $DUE_DATE ]]; then
+                err "Incorrect Date Format"
+           fi	 
+	;;
+	 t )
+	   TAGS=${OPTARG}
+	;;
+	 ? ) 
+	   display_help
+	   exit 1
+	;;
+	 : ) 
+	   display_help
+	   err " Error: -${OPTARG} requires an argument"
+	   exit 1
+	;;
+  esac
+done 
+
+TASK_FILE="$HOME/tasks"
+# Function that finds the task and displays the task 
+function find_task {
+ TASKS=""
+ if [[ -e $TASK_FILE ]]; then
+	 if [[ $# -eq 0 ]]; then
+		TASKS=$TASKS"$(cat $TASK_FILE)"
+	 fi
+	 if [[ -n $DUE_DATE ]]; then 
+         	TASKS=$TASKS"$(grep -E " due: $DUE_DATE" $TASK_FILE | awk '{print "\n---------------\n" $0 "\n---------------"}')"
+	 fi
+	 if [[ -n $TAGS ]]; then
+		TASKS=$TASKS"$(grep -E "##$TAGS" $TASK_FILE | awk '{print "\n---------------\n" $0 "\n---------------"}')"
+	 fi
+	 echo "$TASKS" | less
+ else 
+	err " Error: $TAKS_FILE doesn't exist"
+ fi 
+
+}
+
+find_task "$@"
+
+
+
+
+	
+
+
+
+
+
+
+
+
+

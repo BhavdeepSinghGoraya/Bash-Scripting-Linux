@@ -1,0 +1,109 @@
+#!/bin/bash
+
+# Importing the formatedate file
+source formatdate
+
+# Function to handle error
+err() {
+	echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $*" >&2
+	exit 1
+}  
+
+# Funtion that hepls the user
+function display_help {
+printf "NAME\n"
+printf "\t$(basename $0) - used to add tasks with optional due date and tag\n"
+printf "SYNOPSIS\n"
+printf "\t$(basenme $0) [ options ] task...\n"
+printf "OPTIONS\n"
+printf "\t-d, --due_date\n"
+printf "\t\tThis option adds a due date to the task\n"
+printf "\t-t, --tags\n"
+printf "\t\tThis option adds tags to the task\n"
+printf "USAGE\n"
+printf "\t\t$(basename $0) -d '10 March' -t BCIT Complete assginment\n"
+printf "\t\t$(basename $0) -t URGENT Visit Doctor\n"
+}
+
+# parsing over command line arguments using getopts
+while getopts ":hd:t:" opt; do 
+ 	case ${opt} in
+	h ) 
+	display_help 
+	exit 0
+	;; 
+	d )
+	DUE_DATE=$(format_date "$OPTARG" 2>/dev/null)
+	   if [[ -z $DUE_DATE ]]; then
+                err "Incorrect Date Format"
+           fi
+        ;;
+	t )
+	TAGS="${OPTARG}"
+	;;
+	? )
+	display_help 
+	exit 1 
+	;;
+	: )
+	err "Option -${OPTARG} requires an arugment"
+	display_help
+	exit 1 
+	;;
+ esac
+done
+shift $((OPTIND -1))
+
+# Function that formats the tag
+function format_tag {
+ TAG="$1"
+ echo "##${TAG}"
+}
+
+# function that adds tasks to the the task file 
+function add_task {
+	TASK=""
+	# Checking for the task file
+	TASK_FILE="${HOME}/tasks" 
+	if [[ ! -f $TASK_FILE ]]; then 
+		touch $TASK_FILE
+	fi 
+
+	# Checking for the due date option 
+	if [[ -n "${DUE_DATE}" ]]; then 
+		TASK=" due: ${DUE_DATE}"
+	fi 
+
+	# Checking for the tags option 
+	if [[ -n "${TAGS}" ]]; then 
+		TAG=$(format_tag ${TAGS})
+		TASK=$TASK" ${TAG}"
+	fi 
+	# If no tasks are provided, ask the user for input
+	if [[ $# -eq 0 ]]; then
+    	  echo "Enter Task, Exit using ^D"
+    	  while read line; do 
+		TASK=$TASK"$line"$'\n'
+	  done
+fi
+	# Adding the task description to the task 
+	TASK_DESCRIPTION="$@"
+	TASK=$TASK" ${TASK_DESCRIPTION}"
+	
+	echo "----------------" >> "${TASK_FILE}"
+	echo "${TASK}" >> "${TASK_FILE}"
+	echo "----------------"  >> "${TASK_FILE}"
+
+}
+add_task "$@"	
+
+ 
+
+
+
+
+
+
+
+
+ 

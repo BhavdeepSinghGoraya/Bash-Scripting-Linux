@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Function that formats the date
+function format_date {
+        if [[ -z $1 ]]; then
+                return 1
+        fi
+        FORMATTED_DATE=$(date -d "$@" +"%m/%d/%Y")
+        echo $FORMATTED_DATE
+}
+
